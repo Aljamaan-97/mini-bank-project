@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 
-const protectedLayout = () => {
+const TransactionsLayout = () => {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen
@@ -11,3 +11,5 @@ const protectedLayout = () => {
     </Stack>
   );
 };
+
+export default TransactionsLayout;

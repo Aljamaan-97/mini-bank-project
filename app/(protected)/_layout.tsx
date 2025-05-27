@@ -4,6 +4,8 @@ import React, { useContext } from "react";
 
 const protectedLayout = () => {
   const { isAuthenticated } = useContext(AuthContext);
+  // Check if the user is authenticated
+  console.log("layougt isAuthenticated", isAuthenticated);
   if (!isAuthenticated) {
     return <Redirect href="/Login" />;
   }

@@ -20,7 +20,7 @@ export default function Login() {
     },
     onSuccess: (data: UserType) => {
       setIsAuthenticated(true);
-      router.replace("/");
+      router.replace("/(protected)/(tabs)/(home)");
     },
   });
   const handleLogin = () => {

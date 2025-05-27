@@ -13,32 +13,40 @@ export default function RootLayout() {
 
   const checkToken = async () => {
     const token = await getToken();
+    console.log("token", token);
     if (token) {
       setIsAuthenticated(true);
     }
-    setReady(true);
+    // setReady(true);
   };
 
-  if (!ready) {
-    <View>
-      <Text>LOADING APP</Text>
-    </View>;
-  }
+  console.log(isAuthenticated, "isAuthenticated");
 
   useEffect(() => {
     checkToken();
+    setReady(true);
   }, []);
+
+  if (!ready) {
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "red",
+      }}
+    >
+      <Text>LOADING APP</Text>
+    </View>;
+  }
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated }}>
+    <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated }}>
+      <QueryClientProvider client={queryClient}>
         <Stack screenOptions={{ headerShown: false }}>
-          {!isAuthenticated ? (
-            <Stack.Screen name="(auth)" />
-          ) : (
-            <Stack.Screen name="(protected)" />
-          )}
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(protected)" />
         </Stack>
-      </AuthContext.Provider>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </AuthContext.Provider>
   );
 }
