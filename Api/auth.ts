@@ -1,6 +1,6 @@
 import instance from ".";
 import UserType from "../types/usertype";
-import { storeToken } from "./Storage";
+import { storeToken } from "./store";
 
 const login = async (user: UserType) => {
   const { data } = await instance.post("/auth/login", user);
@@ -33,4 +33,4 @@ const getAllUsers = async () => {
   return data;
 };
 
-export { login, register, me, getAllUsers };
+export { getAllUsers, login, me, register };

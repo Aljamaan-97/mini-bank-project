@@ -20,14 +20,16 @@ export default function Login() {
     },
     onSuccess: (data: UserType) => {
       setIsAuthenticated(true);
-      router.replace("/home");
+      router.replace("/");
     },
   });
   const handleLogin = () => {
     if (!UserName || !password) {
       alert("Please write your username and password");
+      return;
     }
     mutate();
+    console.log("Login request sent");
   };
 
   return (
@@ -60,7 +62,7 @@ export default function Login() {
         <Text>dont have an account? </Text>
         <TouchableOpacity
           onPress={() => {
-            router.push("/(auth)/Register");
+            router.replace("./Register");
           }}
         >
           <Text
@@ -73,7 +75,14 @@ export default function Login() {
           </Text>
         </TouchableOpacity>
       </View>
-      <Button title="login" onPress={() => handleLogin} disabled={isPending} />
+      <Button
+        title="login"
+        onPress={() => {
+          handleLogin();
+          console.log("Login button pressed");
+        }}
+        disabled={isPending}
+      />
     </View>
   );
 }

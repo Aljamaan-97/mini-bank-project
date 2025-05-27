@@ -8,6 +8,7 @@ import {
   Button,
   Image,
   StyleSheet,
+  Text,
   TextInput,
   TouchableOpacity,
   View,
@@ -45,7 +46,7 @@ const Register = () => {
     },
     onSuccess: () => {
       setIsAuthenticated(true);
-      router.replace("/home");
+      router.replace("/");
     },
   });
 
@@ -110,6 +111,23 @@ const Register = () => {
         onChangeText={(text) => setPassword(text)}
       />
 
+      <View style={{ width: "60%", marginBottom: 20, flexDirection: "row" }}>
+        <Text>do you have an account? </Text>
+        <TouchableOpacity
+          onPress={() => {
+            router.replace("./Login");
+          }}
+        >
+          <Text
+            style={{
+              color: "blue",
+              textDecorationLine: "underline",
+            }}
+          >
+            Login
+          </Text>
+        </TouchableOpacity>
+      </View>
       <Button title="Register" onPress={handleRegister} disabled={isPending} />
     </View>
   );

@@ -7,8 +7,9 @@ const protectedLayout = () => {
   if (!isAuthenticated) {
     return <Redirect href="/Login" />;
   }
+
   return (
-    <Stack>
+    <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
     </Stack>
   );

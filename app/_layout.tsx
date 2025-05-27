@@ -1,4 +1,4 @@
-import { getToken } from "@/Api/Storage";
+import { getToken } from "@/Api/store";
 import AuthContext from "@/context/AuthContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
@@ -31,7 +31,13 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated }}>
-        <Stack />
+        <Stack screenOptions={{ headerShown: false }}>
+          {!isAuthenticated ? (
+            <Stack.Screen name="(auth)" />
+          ) : (
+            <Stack.Screen name="(protected)" />
+          )}
+        </Stack>
       </AuthContext.Provider>
     </QueryClientProvider>
   );
