@@ -22,11 +22,6 @@ export default function RootLayout() {
 
   console.log(isAuthenticated, "isAuthenticated");
 
-  useEffect(() => {
-    checkToken();
-    setReady(true);
-  }, []);
-
   if (!ready) {
     <View
       style={{
@@ -39,6 +34,10 @@ export default function RootLayout() {
       <Text>LOADING APP</Text>
     </View>;
   }
+  useEffect(() => {
+    checkToken();
+    setReady(true);
+  }, []);
   return (
     <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated }}>
       <QueryClientProvider client={queryClient}>

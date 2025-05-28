@@ -2,11 +2,16 @@ import { login } from "@/Api/auth";
 import AuthContext from "@/context/AuthContext";
 import UserType from "@/types/usertype";
 import { useMutation } from "@tanstack/react-query";
-import { router } from "expo-router";
+import { Redirect, router } from "expo-router";
 import React, { useContext, useState } from "react";
 import { Button, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function Login() {
+  const { isAuthenticated } = useContext(AuthContext);
+
+  if (isAuthenticated) {
+    return <Redirect href={"/(protected)/(tabs)/(home)"} />;
+  }
   const [UserName, setUserName] = useState("");
   const [password, setPassword] = useState("");
   const { setIsAuthenticated } = useContext(AuthContext);

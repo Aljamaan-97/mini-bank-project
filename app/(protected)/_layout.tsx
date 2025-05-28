@@ -8,12 +8,12 @@ const protectedLayout = () => {
   console.log("layougt isAuthenticated", isAuthenticated);
   if (!isAuthenticated) {
     return <Redirect href="/Login" />;
+  } else {
+    return (
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+      </Stack>
+    );
   }
-
-  return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)" />
-    </Stack>
-  );
 };
 export default protectedLayout;
