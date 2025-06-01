@@ -1,7 +1,13 @@
+import { getAllUsers } from "@/Api/auth";
+import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { Button, Image, Text, View } from "react-native";
 
 const index = () => {
+  const { data } = useQuery({
+    queryKey: ["users"],
+    queryFn: getAllUsers,
+  });
   return (
     <View
       style={{

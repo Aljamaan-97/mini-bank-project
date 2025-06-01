@@ -17,7 +17,7 @@ const register = async (username: string, password: string, image: string) => {
     formData.append("username", username);
     formData.append("password", password);
     formData.append("image", {
-      name: "profile.jpg",
+      name: "profile.jpeg",
       uri: image,
       type: "image/jpeg",
     } as any);
@@ -59,11 +59,13 @@ const getUsers = async () => {
   return data;
 };
 
-const depositFunds = async (amount: number) => {
-  const { data } = await instance.post("/transactions/deposit", { amount }); //check if syntax is correct
+const depositt = async (amount: number) => {
+  const { data } = await instance.put("/transactions/deposit", {
+    amount,
+  });
+
   return data;
 };
-
 const withdrawFunds = async (amount: number) => {
   const { data } = await instance.put("/transactions/withdraw", { amount }); //check if syntax is correct
 
@@ -82,7 +84,7 @@ const getOneUser = async (userId: string) => {
   return data;
 };
 export {
-  depositFunds,
+  depositt,
   getAllUsers,
   getMyProfile,
   getOneUser,

@@ -1,78 +1,84 @@
-import { deleteToken } from "@/Api/store";
+import { deleteToken, isBiometricEnabled } from "@/Api/store";
 import AuthContext from "@/context/AuthContext";
 import { Entypo } from "@expo/vector-icons";
 import React, { useContext } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-const logout = () => {
+const LogOut: React.FC = () => {
   const { setIsAuthenticated } = useContext(AuthContext);
 
-  const handleLogout = () => {
-    Alert.alert(
-      "Logout",
-      "you are about to logout?",
-      [
+  const handleLogout = async () => {
+    const bioFlag = await isBiometricEnabled();
+
+    /* إذا كانت البصمة مفعَّلة، نسأل المستخدم إن كان يريد حذف التوكِن */
+    if (bioFlag) {
+      Alert.alert(
+        "Logout",
+        "Do you also want to remove biometric login?",
+        [
+          {
+            text: "Keep",
+            onPress: () => setIsAuthenticated(false), // لا نحذف التوكِن
+          },
+          {
+            text: "Remove",
+            style: "destructive",
+            onPress: async () => {
+              await deleteToken(); // حذف التوكِن فعليًا
+              setIsAuthenticated(false);
+            },
+          },
+          { text: "Cancel", style: "cancel" },
+        ],
+        { cancelable: true }
+      );
+    } else {
+      /* البصمة غير مفعَّلة → نحذف التوكِن مباشرة */
+      Alert.alert("Logout", "You are about to logout?", [
         {
           text: "Cancel",
           style: "cancel",
         },
-
         {
-          text: "Ok",
+          text: "OK",
           style: "destructive",
           onPress: async () => {
             await deleteToken();
             setIsAuthenticated(false);
           },
         },
-      ],
-      { cancelable: true }
-    );
+      ]);
+    }
   };
 
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <TouchableOpacity
-        style={{
-          justifyContent: "center",
-          alignItems: "center",
-          flexDirection: "row",
-          borderWidth: 1,
-          width: "50%",
-          borderRadius: 15,
-          padding: 10,
-          margin: 3,
-          borderColor: "black",
-        }}
-        onPress={() => {
-          handleLogout();
-        }}
-      >
-        <Text
-          style={{
-            color: "black",
-            fontSize: 20,
-            width: "99%",
-            fontWeight: "bold",
-            textAlign: "center",
-          }}
-        >
-          Logout
-        </Text>
-        <Entypo name="log-out" size={18} color="black" />
+    <View style={styles.container}>
+      <TouchableOpacity style={styles.btn} onPress={handleLogout}>
+        <Text style={styles.btnText}>Logout</Text>
+        <Entypo name="log-out" size={18} color="#fff" />
       </TouchableOpacity>
     </View>
   );
 };
 
-export default logout;
+export default LogOut;
 
+/* ----------------- styles ----------------- */
 const styles = StyleSheet.create({
-  containar: {},
+  container: { alignItems: "center" },
+  btn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "#fff",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+  },
+  btnText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+  },
 });

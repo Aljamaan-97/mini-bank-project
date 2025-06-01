@@ -7,7 +7,7 @@ const protectedLayout = () => {
   // Check if the user is authenticated
   console.log("layougt isAuthenticated", isAuthenticated);
   if (!isAuthenticated) {
-    return <Redirect href="/Login" />;
+    return <Redirect href="/WelcomeScreen" />;
   } else {
     return (
       <Stack screenOptions={{ headerShown: false }}>
