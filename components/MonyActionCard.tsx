@@ -195,11 +195,11 @@ export default TransactionTabs;
 /* --------------------------- local styles --------------------------- */
 const styles = StyleSheet.create({
   card: {
-    width: "90%",
+    width: "100%",
     borderRadius: 12,
     padding: 20,
     alignSelf: "center",
-    marginTop: 20,
+    marginTop: 60,
     shadowOpacity: 0.1,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },

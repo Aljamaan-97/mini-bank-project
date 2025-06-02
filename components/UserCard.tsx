@@ -1,3 +1,4 @@
+import { useTheme } from "@/assets/theme/ThemeProvider";
 import React, { useState } from "react";
 import {
   Image,
@@ -21,6 +22,8 @@ interface UserCardProps {
 }
 
 export default function UserCard({ user, onTransfer }: UserCardProps) {
+  const COLORS = useTheme();
+
   const [amount, setAmount] = useState("");
   const [showInput, setShowInput] = useState(false);
 
@@ -44,24 +47,54 @@ export default function UserCard({ user, onTransfer }: UserCardProps) {
   };
 
   return (
-    <View style={styles.card}>
-      <Image source={{ uri: imageUrl }} style={styles.avatar} />
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: COLORS.colors.card,
+          borderColor: COLORS.colors.border,
+        },
+      ]}
+    >
+      <Image
+        source={{ uri: imageUrl }}
+        style={[styles.avatar, { borderColor: COLORS.colors.border }]}
+      />
       <View style={styles.info}>
-        <Text style={styles.name}>{user.username}</Text>
-        <Text style={styles.balance}>Balance: {user.balance}</Text>
+        <Text style={[styles.name, { color: COLORS.colors.primaryText }]}>
+          {user.username}
+        </Text>
+        <Text style={[styles.balance, { color: COLORS.colors.secondaryText }]}>
+          Balance: {user.balance.toFixed(3)}
+        </Text>
 
         {showInput && (
           <TextInput
-            style={styles.input}
-            keyboardType="numeric"
+            style={[
+              styles.input,
+              {
+                borderColor: COLORS.colors.border,
+                color: COLORS.colors.primaryText,
+              },
+            ]}
             placeholder="Enter amount"
+            placeholderTextColor={COLORS.colors.secondaryText}
+            keyboardType="numeric"
             value={amount}
             onChangeText={setAmount}
           />
         )}
 
-        <TouchableOpacity style={styles.button} onPress={handlePress}>
-          <Text style={styles.buttonText}>Transfer</Text>
+        <TouchableOpacity
+          style={[
+            styles.button,
+            { backgroundColor: COLORS.colors.primaryAccent },
+          ]}
+          onPress={handlePress}
+        >
+          <Text style={[styles.buttonText, { color: COLORS.colors.surface }]}>
+            Transfer
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -71,17 +104,18 @@ export default function UserCard({ user, onTransfer }: UserCardProps) {
 const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
-    backgroundColor: "#f5f5f5",
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
     alignItems: "center",
+    borderWidth: 1,
   },
   avatar: {
     width: 60,
     height: 60,
     borderRadius: 30,
     marginRight: 12,
+    borderWidth: 1,
   },
   info: {
     flex: 1,
@@ -93,23 +127,20 @@ const styles = StyleSheet.create({
   balance: {
     marginTop: 4,
     marginBottom: 8,
-    color: "gray",
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
     padding: 6,
     borderRadius: 4,
     marginBottom: 8,
   },
   button: {
-    backgroundColor: "#007bff",
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 4,
     alignSelf: "flex-start",
   },
   buttonText: {
-    color: "white",
+    fontWeight: "600",
   },
 });

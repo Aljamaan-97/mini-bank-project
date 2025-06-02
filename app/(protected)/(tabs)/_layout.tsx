@@ -2,11 +2,10 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useTheme } from "@/assets/theme/ThemeProvider";
-import LogOut from "@/components/LogOut";
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
@@ -33,14 +32,6 @@ export default function TabLayout() {
           height: 60 + insets.bottom,
           paddingBottom: insets.bottom,
         },
-        tabBarActiveTintColor: colors.primaryAccent,
-        tabBarInactiveTintColor: colors.secondaryText,
-        tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
-        headerRight: () => (
-          <View style={styles.logoutContainer}>
-            <LogOut />
-          </View>
-        ),
       }}
     >
       <Tabs.Screen

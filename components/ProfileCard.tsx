@@ -3,23 +3,18 @@ import { useTheme } from "@/assets/theme/ThemeProvider";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
-import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
-const COLORS = useTheme();
-// /app/components/ProfileCard.tsx
+import {
+  ActivityIndicator,
+  Image,
+  ImageBackground,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
-/* لوحة الألوان الموحَّدة */
-// const COLORS = {
-//   primary: "#1E3D58",
-//   accent: "#00A8E8",
-//   lightText: "#FFFFFF",
-//   border: "#C5CED8",
-//   card: "#FFFFFF",
-// };
-
-/**
- *بطاقة الملف الشخصي: صورة، اسم مستخدم، رصيد متاح
- */
 const ProfileCard = () => {
+  const COLORS = useTheme();
+
   const { data, error, isLoading } = useQuery({
     queryKey: ["profile"],
     queryFn: getMyProfile,
@@ -41,66 +36,55 @@ const ProfileCard = () => {
       </View>
     );
 
-  const getImageUrl = (imagePath: String) => {
-    if (!imagePath) return console.log("No image path provided");
-
+  const getImageUrl = (imagePath: string | undefined) => {
+    if (!imagePath) return null;
     if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
-      console.log("Image URL is valid:", imagePath);
-      return imagePath; // إذا كان الرابط يبدأ بـ http أو https
+      return imagePath;
     }
-
     const baseUrl = "https://react-bank-project.eapi.joincoded.com";
-
-    let fullUrl;
-    if (imagePath.startsWith("/")) {
-      console.log("Full image URL 1:", fullUrl);
-      fullUrl = `${baseUrl}${imagePath}`;
-    } else {
-      console.log("Full image URL 2:", fullUrl);
-      fullUrl = `${baseUrl}/${imagePath}`;
-    }
-
-    return fullUrl; // إذا كان الرابط يبدأ بـ /، أضف القاعدة
+    return `${baseUrl}${
+      imagePath.startsWith("/") ? imagePath : `/${imagePath}`
+    }`;
   };
 
-  /* fallback للصورة والبيانات */
-  const avatarUri = data.image || require("@/assets/images/default-avatar.jpg");
-  const username = data.username || "Unknown";
-  const balance = data.balance ?? 0;
-
-  const imageUrl = getImageUrl(data?.image);
-  console.log(data.image);
+  const avatarUri = data.image
+    ? { uri: getImageUrl(data.image) }
+    : require("@/assets/images/default-avatar.jpg");
 
   return (
-    <View style={styles.card}>
-      {/* رأس البطاقة */}
-      <View style={styles.headerRow}>
-        <Image
-          source={imageUrl ? { uri: imageUrl } : avatarUri}
-          style={styles.avatar}
-        />
-        <Text
-          style={[styles.welcomeText, { color: COLORS.colors.primaryText }]}
-        >
-          Welcome, {username}
-        </Text>
-
-        <View style={styles.balanceRow}>
-          <Ionicons name="wallet" size={20} color={COLORS.colors.primaryText} />
+    <ImageBackground
+      source={require("@/assets/images/cardb.png")}
+      style={styles.card}
+      imageStyle={{ borderRadius: 12 }}
+    >
+      <View style={styles.overlay}>
+        <View style={styles.headerRow}>
+          <Image source={avatarUri} style={styles.avatar} />
           <Text
-            style={[styles.balanceText, { color: COLORS.colors.primaryText }]}
+            style={[styles.welcomeText, { color: COLORS.colors.primaryText }]}
           >
-            {balance.toFixed(3)} KD
+            {data.username || "Unknown"}
           </Text>
+          <View style={styles.balanceRow}>
+            <Ionicons
+              name="wallet"
+              size={20}
+              color={COLORS.colors.primaryText}
+            />
+            <Text
+              style={[styles.balanceText, { color: COLORS.colors.primaryText }]}
+            >
+              {data.balance.toFixed(3)} KD
+            </Text>
+          </View>
         </View>
       </View>
-    </View>
+    </ImageBackground>
   );
 };
 
 export default ProfileCard;
 
-/* ---------- styles ---------- */
 const styles = StyleSheet.create({
   centerBox: {
     flex: 1,
@@ -108,24 +92,45 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   card: {
-    width: "90%",
-    borderRadius: 12,
-    padding: 24,
+    width: "100%",
     alignSelf: "center",
-    marginTop: 20,
+    height: 220,
+    marginTop: 10,
+    borderRadius: 12,
     shadowColor: "#000",
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.5,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    elevation: 4,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(255, 255, 255, 0.04)",
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerRow: {
     flexDirection: "column",
     alignItems: "center",
-    marginBottom: 12,
+    gap: 8,
   },
-  avatar: { width: 90, height: 90, borderRadius: 45, marginBottom: 12 },
-  welcomeText: { fontSize: 18, fontWeight: "600", marginBottom: 8 },
-  balanceRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  balanceText: { fontSize: 20, fontWeight: "700" },
+  avatar: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+  },
+  welcomeText: {
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  balanceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  balanceText: {
+    fontSize: 20,
+    fontWeight: "700",
+  },
 });

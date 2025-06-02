@@ -1,10 +1,14 @@
 import { getAllUsers, transferToUser } from "@/Api/auth";
+import { useTheme } from "@/assets/theme/ThemeProvider";
 import UserCard from "@/components/UserCard";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React from "react";
 import { Alert, FlatList, StyleSheet, Text, View } from "react-native";
 
 export default function UsersScreen() {
+  // الحصول على ألوان الثيم الحالية
+  const COLORS = useTheme();
+
   const {
     data: users = [],
     isLoading,
@@ -22,11 +26,8 @@ export default function UsersScreen() {
       Alert.alert("✅ Success", "Funds transferred successfully!");
     },
     onError: (error: any) => {
-      console.log(" Transfer error:", error?.response?.data);
-      Alert.alert(
-        " Error",
-        error?.response?.data?.message || "Transfer failed"
-      );
+      console.log("Transfer error:", error?.response?.data);
+      Alert.alert("Error", error?.response?.data?.message || "Transfer failed");
     },
   });
 
@@ -39,13 +40,20 @@ export default function UsersScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Users</Text>
+    <View
+      style={[styles.container, { backgroundColor: COLORS.colors.background }]}
+    >
+      {/* عنوان الشاشة */}
+      <Text style={[styles.title, { color: COLORS.colors.primaryText }]}>
+        Users
+      </Text>
 
       {isLoading ? (
-        <Text>Loading users...</Text>
+        <Text style={{ color: COLORS.colors.secondaryText }}>
+          Loading users...
+        </Text>
       ) : isError ? (
-        <Text>Error loading users.</Text>
+        <Text style={{ color: COLORS.colors.error }}>Error loading users.</Text>
       ) : (
         <FlatList
           data={users}
@@ -53,6 +61,7 @@ export default function UsersScreen() {
           renderItem={({ item }) => (
             <UserCard user={item} onTransfer={handleTransfer} />
           )}
+          contentContainerStyle={{ paddingBottom: 16 }}
         />
       )}
     </View>

@@ -25,6 +25,7 @@ import {
 import { isBiometricEnabled, setBiometricEnabled } from "@/Api/store";
 import { useTheme } from "@/assets/theme/ThemeProvider"; // للألوان الفاتح/الداكن
 import Button from "@/components/Button"; // زرّك الموحّد
+import LogOut from "@/components/LogOut";
 
 /* ثابت ألوان احتياطي (يُستخدم لو لم تستورد من ThemeProvider) */
 const COLORS = {
@@ -207,6 +208,7 @@ const SettingsScreen: React.FC = () => {
                   Biometric Login
                 </Text>
                 <Switch value={bioEnabled} onValueChange={toggleBiometric} />
+                <LogOut />
               </View>
             </View>
           </ScrollView>
