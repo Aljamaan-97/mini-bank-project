@@ -1,49 +1,35 @@
+import { useTheme } from "@/assets/theme/ThemeProvider";
 import { Stack } from "expo-router";
 import React from "react";
 
-const ProtectedLayout = () => {
+/**
+ * Layout for all unauthenticated (auth) screens.
+ * ├── WelcomeScreen   (no header)
+ * ├── Login           (title: “Login”)
+ * └── Register        (title: “Register”)
+ */
+const AuthLayout = () => {
+  const { colors } = useTheme();
+
   return (
     <Stack
       screenOptions={{
-        headerStyle: {
-          backgroundColor: "#000042", // خلفية الكابتن كحلي
-        },
-        headerTintColor: "#ffffff", // لون نص العنوان وأيقونات الرجوع أبيض
-        headerTitleStyle: {
-          fontSize: 20,
-          fontWeight: "bold",
-        },
-        headerTitleAlign: "center", // يتموضع العنوان في الوسط
-        presentation: "modal", // إذا أردت فتح الشاشات كـ modal (اختياري)
+        headerStyle: { backgroundColor: colors.primaryDark },
+        headerTintColor: colors.primaryText,
+        headerTitleStyle: { fontSize: 20, fontWeight: "bold" },
+        headerTitleAlign: "center",
       }}
     >
-      {/* شاشة الترحيب */}
-      <Stack.Screen
-        name="WelcomeScreen"
-        options={{
-          title: " بنك سهالة",
+      {/* Welcome (splash / landing) */}
+      <Stack.Screen name="WelcomeScreen" options={{ headerShown: false }} />
 
-          headerShown: false,
-        }}
-      />
+      {/* Login */}
+      <Stack.Screen name="Login" options={{ title: "Login" }} />
 
-      {/* شاشة تسجيل الدخول */}
-      <Stack.Screen
-        name="Login"
-        options={{
-          title: "تسجيل الدخول",
-        }}
-      />
-
-      {/* شاشة التسجيل */}
-      <Stack.Screen
-        name="Register"
-        options={{
-          title: "إنشاء حساب",
-        }}
-      />
+      {/* Register */}
+      <Stack.Screen name="Register" options={{ title: "Register" }} />
     </Stack>
   );
 };
 
-export default ProtectedLayout;
+export default AuthLayout;

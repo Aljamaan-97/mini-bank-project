@@ -1,10 +1,4 @@
-import { login } from "@/Api/auth";
-import {
-  isBiometricEnabled,
-  setBiometricEnabled,
-  storeToken,
-} from "@/Api/store";
-import AuthContext from "@/context/AuthContext";
+// /app/(auth)/LoginScreen.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation } from "@tanstack/react-query";
 import * as LocalAuth from "expo-local-authentication";
@@ -19,54 +13,60 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
 
-/* ----------------------------- لوحة الألوان الموحدة ----------------------------- */
-const COLORS = {
-  primary: "#1E3D58", // أزرق كحلي يناسب بنك
-  accent: "#00A8E8", // أزرق سماوي مضيء
-  lightText: "#FFFFFF",
-  border: "#C5CED8",
-  background: "#F4F6F9",
-};
+import { login } from "@/Api/auth";
+import {
+  isBiometricEnabled,
+  setBiometricEnabled,
+  storeToken,
+} from "@/Api/store";
+import { useTheme } from "@/assets/theme/ThemeProvider";
+import Button from "@/components/Button";
+import Input from "@/components/Input";
+import AuthContext from "@/context/AuthContext";
 
-export default function Login() {
+export default function LoginScreen() {
   const { isAuthenticated, setIsAuthenticated } = useContext(AuthContext);
+  const { colors } = useTheme();
+
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
   const [canBio, setCanBio] = useState(false);
 
-  /* التحقق إن كان يمكن استخدام البصمة */
+  // Check if the device supports biometric auth and if the user enabled it
   useEffect(() => {
     (async () => {
-      const ready =
-        (await LocalAuth.hasHardwareAsync()) &&
-        (await LocalAuth.isEnrolledAsync()) &&
-        (await isBiometricEnabled());
-      setCanBio(ready);
+      const hardware = await LocalAuth.hasHardwareAsync();
+      const enrolled = await LocalAuth.isEnrolledAsync();
+      const enabled = await isBiometricEnabled();
+      setCanBio(hardware && enrolled && enabled);
     })();
   }, []);
 
-  /* استدعاء TanStack Query */
+  // Move to protected stack
+  const finalize = () => {
+    setIsAuthenticated(true);
+    router.replace("/(protected)/(tabs)/(home)");
+  };
+
+  // React-Query login call
   const { mutate, isPending } = useMutation({
     mutationKey: ["login"],
     mutationFn: () => login({ username: userName, password }),
-
-    onError: () => Alert.alert("error", "wrong username or password"),
-
+    onError: () => Alert.alert("Login failed", "Wrong username or password"),
     onSuccess: async (data) => {
       await storeToken(data.token);
       Alert.alert(
-        "Activate Biometric",
-        "do you want to use biometric login?",
+        "Enable biometric login?",
+        "You can use fingerprint / face-ID next time.",
         [
-          { text: "later", style: "cancel", onPress: finalize },
+          { text: "Later", style: "cancel", onPress: finalize },
           {
-            text: "yes",
+            text: "Enable",
             onPress: async () => {
               await setBiometricEnabled(true);
               setCanBio(true);
@@ -79,32 +79,31 @@ export default function Login() {
     },
   });
 
-  const finalize = () => {
-    setIsAuthenticated(true);
-    router.replace("/(protected)/(tabs)/(home)");
-  };
-
-  /* التحقق بالبصمة */
+  // Trigger biometric auth
   const handleBiometric = async () => {
     const { success } = await LocalAuth.authenticateAsync({
-      promptMessage: "logim using biometric",
-      cancelLabel: "cancel",
+      promptMessage: "Login with biometrics",
+      cancelLabel: "Cancel",
       disableDeviceFallback: true,
     });
     if (success) finalize();
   };
 
+  // Handle “Login” button
   const handleLogin = () => {
-    if (!userName || !password)
-      return Alert.alert("alert", "please fill all fields");
+    if (!userName.trim() || !password.trim()) {
+      return Alert.alert("Missing data", "Please fill all fields");
+    }
     mutate();
   };
 
-  if (isAuthenticated) return <Redirect href="/(protected)/(tabs)/(home)" />;
+  // Already logged in? → redirect
+  if (isAuthenticated) {
+    return <Redirect href="/(protected)/(tabs)/(home)" />;
+  }
 
-  /* --------------------------------- JSX --------------------------------- */
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
@@ -116,60 +115,70 @@ export default function Login() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
+            {/* logo */}
             <Ionicons
               name="cash-outline"
               size={64}
-              color={COLORS.accent}
+              color={colors.primaryAccent}
               style={styles.logo}
             />
-            <Text style={styles.title}>Friends Bank</Text>
-            <Text style={styles.subtitle}>login to procced to the app</Text>
 
+            {/* heading */}
+            <Text style={[styles.title, { color: colors.primaryAccent }]}>
+              Sahala Bank
+            </Text>
+            <Text style={[styles.subtitle, { color: colors.primaryAccent }]}>
+              Login to continue
+            </Text>
+
+            {/* biometric button (if available) */}
             {canBio && (
-              <TouchableOpacity style={styles.bioBtn} onPress={handleBiometric}>
+              <TouchableOpacity
+                style={[
+                  styles.bioBtn,
+                  { backgroundColor: colors.primaryAccent },
+                ]}
+                onPress={handleBiometric}
+              >
                 <Ionicons
                   name="finger-print-outline"
                   size={28}
-                  color={COLORS.lightText}
+                  color={colors.primaryText}
                 />
               </TouchableOpacity>
             )}
 
-            <TextInput
+            {/* form */}
+            <Input
+              label="Username"
               placeholder="Username"
-              placeholderTextColor={COLORS.border}
-              style={styles.input}
-              autoCapitalize="none"
+              placeholderTextColor={colors.border}
               value={userName}
               onChangeText={setUserName}
+              autoCapitalize="none"
             />
-            <TextInput
+            <Input
+              label="Password"
               placeholder="Password"
-              placeholderTextColor={COLORS.border}
-              style={styles.input}
+              placeholderTextColor={colors.border}
               secureTextEntry
               value={password}
               onChangeText={setPassword}
             />
 
-            <TouchableOpacity
-              style={[styles.primaryBtn, isPending && styles.btnDisabled]}
-              onPress={handleLogin}
-              activeOpacity={0.85}
-              disabled={isPending}
-            >
-              <Ionicons
-                name="log-in-outline"
-                size={20}
-                color={COLORS.lightText}
-              />
-              <Text style={styles.btnText}>Login</Text>
-            </TouchableOpacity>
+            <Button title="Login" onPress={handleLogin} disabled={isPending} />
 
+            {/* link to Register */}
             <View style={styles.switchWrapper}>
-              <Text>Need an account? </Text>
-              <TouchableOpacity onPress={() => router.replace("./Register")}>
-                <Text style={styles.link}>Register</Text>
+              <Text style={{ color: colors.primaryText }}>
+                Need an account?{" "}
+              </Text>
+              <TouchableOpacity
+                onPress={() => router.replace("/(auth)/Register")}
+              >
+                <Text style={[styles.link, { color: colors.primaryAccent }]}>
+                  Register
+                </Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -179,9 +188,8 @@ export default function Login() {
   );
 }
 
-/* ------------------------------- أنماط موحّدة ------------------------------- */
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.background },
+  safe: { flex: 1 },
   container: {
     alignItems: "center",
     paddingHorizontal: 24,
@@ -189,35 +197,13 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   logo: { marginBottom: 12 },
-  title: { fontSize: 26, fontWeight: "700", color: COLORS.primary },
-  subtitle: { fontSize: 14, color: COLORS.primary, marginBottom: 24 },
-  input: {
-    width: "100%",
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 16,
-    backgroundColor: COLORS.lightText,
-  },
-  primaryBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: COLORS.primary,
-    paddingVertical: 14,
-    paddingHorizontal: 34,
-    borderRadius: 30,
-    marginTop: 8,
-  },
-  btnText: { color: COLORS.lightText, fontWeight: "600", fontSize: 16 },
-  btnDisabled: { opacity: 0.6 },
-  link: { color: COLORS.accent, textDecorationLine: "underline" },
-  switchWrapper: { flexDirection: "row", marginTop: 18 },
+  title: { fontSize: 26, fontWeight: "700", marginBottom: 4 },
+  subtitle: { fontSize: 14, marginBottom: 24 },
   bioBtn: {
-    backgroundColor: COLORS.primary,
     padding: 16,
     borderRadius: 40,
     marginBottom: 24,
   },
+  link: { textDecorationLine: "underline", fontWeight: "600" },
+  switchWrapper: { marginTop: 18, flexDirection: "row" },
 });

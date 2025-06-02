@@ -1,7 +1,8 @@
+// /app/(protected)/(settings)/_layout.tsx
 import { Stack } from "expo-router";
+import React from "react";
 
-const sittinglayout = () => {
-  return <Stack screenOptions={{ headerShown: false }} />;
-};
+/** Global layout for Settings screens (header hidden). */
+const SettingsLayout = () => <Stack screenOptions={{ headerShown: false }} />;
 
-export default sittinglayout;
+export default SettingsLayout;

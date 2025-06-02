@@ -1,8 +1,8 @@
-// src/components/TransactionTabs.tsx
+// /app/components/TransactionTabs.tsx
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React, { useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Animated,
   StyleSheet,
@@ -13,310 +13,219 @@ import {
 } from "react-native";
 
 import { depositt, withdrawFunds } from "@/Api/auth";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTheme } from "@/assets/theme/ThemeProvider";
+import Button from "@/components/Button";
 
 interface TransactionTabsProps {
   balance: number;
 }
 
+/**
+ * A card component with two tabs (deposit / withdraw) and amount field.
+ */
 const TransactionTabs: React.FC<TransactionTabsProps> = ({ balance }) => {
-  // --- حالات الواجهة ---
+  /* ----------------------------- local state ----------------------------- */
   const [activeTab, setActiveTab] = useState<"deposit" | "withdraw">("deposit");
-  const [amount, setAmount] = useState<string>("");
-  const [errorMessage, setErrorMessage] = useState<string>("");
-  const [hasError, setHasError] = useState<boolean>(false);
+  const [amount, setAmount] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
-  // أنيميشن الاهتزاز عند حدوث خطأ
-  const shakeAnim = useRef(new Animated.Value(0)).current;
-  const numericAmount = parseFloat(amount);
-  const isSendDisabled = !amount || numericAmount < 1 || isNaN(numericAmount);
+  /* ----------------------------- theme hooks ---------------------------- */
+  const { colors } = useTheme();
 
-  // استدعاء QueryClient لإبطال كاش بيانات الملف الشخصي بعد نجاح أي عملية
-  const queryClient = useQueryClient();
-
-  const triggerShake = () => {
-    Animated.sequence([
-      Animated.timing(shakeAnim, {
-        toValue: 10,
-        duration: 50,
-        useNativeDriver: true,
-      }),
-      Animated.timing(shakeAnim, {
-        toValue: -10,
-        duration: 50,
-        useNativeDriver: true,
-      }),
-      Animated.timing(shakeAnim, {
-        toValue: 6,
-        duration: 50,
-        useNativeDriver: true,
-      }),
-      Animated.timing(shakeAnim, {
-        toValue: -6,
-        duration: 50,
-        useNativeDriver: true,
-      }),
-      Animated.timing(shakeAnim, {
-        toValue: 0,
-        duration: 50,
-        useNativeDriver: true,
-      }),
-    ]).start();
+  /* --------------------------- shake animation -------------------------- */
+  const shake = useRef(new Animated.Value(0)).current;
+  const runShake = () => {
+    const values = [10, -10, 6, -6, 0];
+    Animated.sequence(
+      values.map((v) =>
+        Animated.timing(shake, {
+          toValue: v,
+          duration: 50,
+          useNativeDriver: true,
+        })
+      )
+    ).start();
   };
 
-  // ------------------------------------
-  // إعداد useMutation بالإصدار الكائني
-  // ------------------------------------
-  // 1) دالة الإيداع
-  const { mutate: depositMutate, isPending: isDepositPending } = useMutation<
-    number,
+  /* --------------------------- react‑query hooks ------------------------- */
+  const qc = useQueryClient();
+
+  type TxResp = number;
+
+  const { mutate: depositMutate, isPending: depositPending } = useMutation<
+    TxResp,
     Error,
     number
   >({
     mutationKey: ["deposit"],
-    mutationFn: (amt: number) => depositt(amt),
-    onMutate: () => {
-      console.log("بدأت عملية الإيداع...");
-    },
-    onError: (error) => {
-      console.error("خطأ أثناء الإيداع:", error);
-      Alert.alert("فشل الإيداع", "حاول مرة أخرى في وقت لاحق.");
-    },
-    onSuccess: (data) => {
-      console.log("تم الإيداع بنجاح:", data);
-      Alert.alert("نجاح", "تم إيداع المبلغ بنجاح.");
-      // بعد النجاح، نُعِيد جلب بيانات الملف الشخصي (الرصيد)
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
+    mutationFn: (amt) => depositt(amt),
+    onSuccess: () => {
+      Alert.alert("Success", "Amount deposited successfully");
+      qc.invalidateQueries({ queryKey: ["profile"] });
       setAmount("");
     },
-    onSettled: () => {
-      console.log("انتهت عملية الإيداع.");
-    },
+    onError: () => Alert.alert("Deposit Failed", "Please try again later"),
   });
 
-  // 2) دالة السحب
-  const { mutate: withdrawMutate, isPending: isWithdrawPending } = useMutation<
-    number,
+  const { mutate: withdrawMutate, isPending: withdrawPending } = useMutation<
+    TxResp,
     Error,
     number
   >({
     mutationKey: ["withdraw"],
-    mutationFn: (amt: number) => withdrawFunds(amt),
-    onMutate: () => {
-      console.log("بدأت عملية السحب...");
-    },
-    onError: (error) => {
-      console.error("خطأ أثناء السحب:", error);
-      Alert.alert("فشل السحب", "حاول مرة أخرى أو تأكد من الرصيد.");
-    },
-    onSuccess: (data) => {
-      console.log("تم السحب بنجاح:", data);
-      Alert.alert("نجاح", "تم سحب المبلغ بنجاح.");
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
+    mutationFn: (amt) => withdrawFunds(amt),
+    onSuccess: () => {
+      Alert.alert("Success", "Amount withdrawn successfully");
+      qc.invalidateQueries({ queryKey: ["profile"] });
       setAmount("");
     },
-    onSettled: () => {
-      console.log("انتهت عملية السحب.");
-    },
+    onError: () => Alert.alert("Withdrawal Failed", "Please try again later"),
   });
 
-  // ------------------------------------
-  // دالة التعامل مع الضغط على "Send"
-  // ------------------------------------
-  const handleSend = () => {
-    setErrorMessage("");
-    setHasError(false);
+  /* --------------------------- helpers / UI ----------------------------- */
+  const numericAmount = parseFloat(amount);
+  const isInvalid = !amount || isNaN(numericAmount) || numericAmount <= 0;
+  const loading = depositPending || withdrawPending;
 
-    // 1) التحقق من صلاحية المبلغ
-    if (isNaN(numericAmount) || numericAmount < 1) {
-      setErrorMessage("أدخل مبلغًا صالحًا أكبر من صفر.");
-      setHasError(true);
-      triggerShake();
+  const validateAndSend = () => {
+    setError(null);
+
+    if (isInvalid) {
+      setError("Enter a valid amount greater than zero");
+      runShake();
       return;
     }
-
-    // 2) في حالة السحب، نتحقّق من كفاية الرصيد
     if (activeTab === "withdraw" && numericAmount > balance) {
-      setErrorMessage("الرصيد غير كافٍ");
-      setHasError(true);
-      triggerShake();
+      setError("Insufficient balance");
+      runShake();
       return;
     }
-
-    // 3) بناءً على التبويب، نطلق الـ mutate المناسب
-    if (activeTab === "deposit") {
-      depositMutate(numericAmount);
-    } else {
-      withdrawMutate(numericAmount);
-    }
+    activeTab === "deposit"
+      ? depositMutate(numericAmount)
+      : withdrawMutate(numericAmount);
   };
 
-  return (
-    <View style={styles.cardContainer}>
-      {/* تبويبات Deposit / Withdraw */}
-      <View style={styles.tabs}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === "deposit" && styles.activeTab]}
-          onPress={() => {
-            setActiveTab("deposit");
-            setErrorMessage("");
-            setHasError(false);
-          }}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "deposit" && styles.activeTabText,
-            ]}
-          >
-            Deposit
-          </Text>
-        </TouchableOpacity>
+  const onTabSelect = (tab: "deposit" | "withdraw") => {
+    setActiveTab(tab);
+    setError(null);
+    setAmount("");
+  };
 
-        <TouchableOpacity
-          style={[styles.tab, activeTab === "withdraw" && styles.activeTab]}
-          onPress={() => {
-            setActiveTab("withdraw");
-            setErrorMessage("");
-            setHasError(false);
-          }}
-        >
-          <Text
+  /* -------------------------------- render ------------------------------ */
+  return (
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: colors.surface, shadowColor: "#000" },
+      ]}
+    >
+      {/* Tabs */}
+      <View style={styles.tabsRow}>
+        {(
+          [
+            { key: "deposit", label: "Deposit" },
+            { key: "withdraw", label: "Withdraw" },
+          ] as const
+        ).map(({ key, label }) => (
+          <TouchableOpacity
+            key={key}
             style={[
-              styles.tabText,
-              activeTab === "withdraw" && styles.activeTabText,
+              styles.tab,
+              { backgroundColor: colors.border },
+              activeTab === key && { backgroundColor: colors.primaryAccent },
             ]}
+            onPress={() => onTabSelect(key)}
           >
-            Withdraw
-          </Text>
-        </TouchableOpacity>
+            <Text
+              style={{
+                color:
+                  activeTab === key ? colors.background : colors.primaryText,
+                fontWeight: "600",
+              }}
+            >
+              {label}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
-      {/* حقل إدخال المبلغ مع تأثير الاهتزاز */}
-      <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
+      {/* Amount input with shake */}
+      <Animated.View style={{ transform: [{ translateX: shake }] }}>
         <TextInput
+          inputMode="decimal"
           placeholder="Enter amount"
-          placeholderTextColor="#888"
+          placeholderTextColor={colors.secondaryText}
           keyboardType="numeric"
           value={amount}
-          onChangeText={(value) => {
-            setAmount(value);
-            setErrorMessage("");
-            setHasError(false);
+          onChangeText={(v) => {
+            const cleaned = v.replace(/[^0-9.]/g, "");
+            setAmount(cleaned);
+            setError(null);
           }}
-          style={[styles.input, hasError && styles.inputError]}
+          style={[
+            styles.input,
+            {
+              backgroundColor: colors.background,
+              color: colors.primaryText,
+              borderColor: error ? colors.error : colors.border,
+            },
+          ]}
         />
       </Animated.View>
 
-      {/* رسالة الخطأ إن وُجدت */}
-      {errorMessage ? (
-        <Text style={styles.errorText}>{errorMessage}</Text>
-      ) : null}
+      {/* Error */}
+      {error && (
+        <Text style={[styles.error, { color: colors.error }]}>{error}</Text>
+      )}
 
-      {/* زر الإرسال */}
-      <TouchableOpacity
-        onPress={handleSend}
-        style={[
-          styles.sendButton,
-          (isSendDisabled || isDepositPending || isWithdrawPending) &&
-            styles.disabledButton,
-        ]}
-        disabled={isSendDisabled || isDepositPending || isWithdrawPending}
-      >
-        {isDepositPending || isWithdrawPending ? (
-          <ActivityIndicator color="#FFFFFF" />
-        ) : (
-          <Text style={styles.sendButtonText}>Submit</Text>
-        )}
-      </TouchableOpacity>
+      {/* Submit button */}
+      <Button
+        title="Submit"
+        onPress={validateAndSend}
+        loading={loading}
+        disabled={isInvalid}
+        fullWidth
+      />
     </View>
   );
 };
 
 export default TransactionTabs;
 
-// ------------------------------ الأنماط ------------------------------
-const COLORS = {
-  primary: "#1E3D58",
-  accent: "#00A8E8",
-  lightText: "#FFFFFF",
-  border: "#C5CED8",
-  card: "#FFFFFF",
-};
-
+/* --------------------------- local styles --------------------------- */
 const styles = StyleSheet.create({
-  /* 1. صندوق المكون */
-  cardContainer: {
+  card: {
     width: "90%",
-    backgroundColor: COLORS.card,
     borderRadius: 12,
     padding: 20,
     alignSelf: "center",
     marginTop: 20,
-    shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
   },
-  /* 2. التبويبات (Tabs) */
-  tabs: {
+  tabsRow: {
     flexDirection: "row",
     marginBottom: 16,
   },
   tab: {
     flex: 1,
     paddingVertical: 10,
-    backgroundColor: "#ddd",
     alignItems: "center",
     marginHorizontal: 4,
     borderRadius: 8,
   },
-  activeTab: {
-    backgroundColor: COLORS.primary,
-  },
-  tabText: {
-    color: "#444",
-    fontWeight: "600",
-  },
-  activeTabText: {
-    color: COLORS.lightText,
-  },
-  /* 3. حقل الإدخال */
   input: {
-    backgroundColor: "#F9F9F9",
     borderWidth: 1,
-    borderColor: COLORS.border,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: "#000",
   },
-  inputError: {
-    borderColor: "red",
-  },
-  /* 4. رسالة الخطأ */
-  errorText: {
-    color: "red",
+  error: {
     marginTop: 8,
     marginBottom: 12,
     textAlign: "center",
     fontSize: 14,
-  },
-  /* 5. زر الإرسال */
-  sendButton: {
-    marginTop: 5,
-    backgroundColor: COLORS.accent,
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  disabledButton: {
-    backgroundColor: "#999",
-  },
-  sendButtonText: {
-    color: COLORS.lightText,
-    fontWeight: "700",
-    fontSize: 16,
   },
 });

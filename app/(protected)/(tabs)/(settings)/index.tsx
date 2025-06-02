@@ -1,9 +1,12 @@
-import { isBiometricEnabled, setBiometricEnabled } from "@/Api/store";
-import LogOut from "@/components/LogOut";
+// /app/(protected)/(settings)/SettingsScreen.tsx
 import { Ionicons } from "@expo/vector-icons";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import { useMutation } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useState } from "react";
 import {
+  Alert,
+  Appearance,
   Image,
   Keyboard,
   KeyboardAvoidingView,
@@ -19,35 +22,31 @@ import {
   View,
 } from "react-native";
 
-/* لوحة الألوان الموحَّدة للتطبيق */
+import { isBiometricEnabled, setBiometricEnabled } from "@/Api/store";
+import { useTheme } from "@/assets/theme/ThemeProvider"; // للألوان الفاتح/الداكن
+import Button from "@/components/Button"; // زرّك الموحّد
+
+/* ثابت ألوان احتياطي (يُستخدم لو لم تستورد من ThemeProvider) */
 const COLORS = {
   primary: "#1E3D58",
   accent: "#00A8E8",
   lightText: "#FFFFFF",
   border: "#C5CED8",
   background: "#F4F6F9",
-  socialIcon: "#1DA1F2", // لون أيقونات التواصل (تويتر كمثال)
 };
 
-/**
- * شاشة الإعدادات (Settings)
- * - تغيير صورة الملف الشخصي
- * - تفعيل / تعطيل تسجيل الدخول بالبصمة
- * - أزرار للتواصل الاجتماعي (واتساب، إنستقرام، إكس)
- */
 const SettingsScreen: React.FC = () => {
+  const { colors, scheme, toggleTheme } = useTheme(); // استعمل ألوان الثيم
   const [avatar, setAvatar] = useState<string | null>(null);
-  const [bioEnabled, setBioEnabled] = useState<boolean>(false);
+  const [bioEnabled, setBio] = useState(false);
+  const [themeMode, setThemeMode] = useState<"auto" | "light" | "dark">("auto");
 
-  /* تحميل حالة البصمة عند فتح الشاشة */
+  /* ─── تحميل حالة البصمة عند فتح الشاشة ─── */
   useEffect(() => {
-    (async () => {
-      const flag = await isBiometricEnabled();
-      setBioEnabled(flag);
-    })();
+    (async () => setBio(await isBiometricEnabled()))();
   }, []);
 
-  /* تغيير صورة البروفايل */
+  /* ─── اختيار صورة شخصية ─── */
   const pickAvatar = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -55,42 +54,55 @@ const SettingsScreen: React.FC = () => {
       aspect: [1, 1],
       quality: 0.8,
     });
-    if (!res.canceled) {
-      setAvatar(res.assets[0].uri);
-    }
+    if (!res.canceled) setAvatar(res.assets[0].uri);
   };
 
-  /* تبديل البصمة */
+  /* ─── حفظ الصورة في الخادم ─── */
+  const { mutate: saveAvatar, isPending } = useMutation({
+    mutationKey: ["update-avatar"],
+    mutationFn: async () => {
+      if (!avatar) throw new Error("No image selected");
+      // TODO: استدعِ API فعليًا، مثال:
+      // await updateProfile({ avatar });
+    },
+    onSuccess: () => Alert.alert("Success", "Image updated 👍"),
+    onError: () => Alert.alert("Error", "Something went wrong 😔"),
+  });
+
+  /* ─── تفعيل / إلغاء البصمة ─── */
   const toggleBiometric = async (value: boolean) => {
-    setBioEnabled(value);
+    setBio(value);
     await setBiometricEnabled(value);
   };
 
-  /* دوال فتح الروابط للتواصل الاجتماعي */
-  const openWhatsApp = () => {
-    // هنا ضع رابط واتساب الخاص بك (قد يكون رابط محادثة)
-    const url = "https://wa.me/96565115465";
-    Linking.openURL(url).catch((err) =>
-      console.error("Failed to open WhatsApp:", err)
-    );
-  };
-  const openInstagram = () => {
-    // ضع رابط حساب إنستقرام
-    const url = "https://instagram.com/your_username";
-    Linking.openURL(url).catch((err) =>
-      console.error("Failed to open Instagram:", err)
-    );
-  };
-  const openX = () => {
-    // ضع رابط حساب إكس (تويتر سابقًا)
-    const url = "https://twitter.com/your_username";
-    Linking.openURL(url).catch((err) =>
-      console.error("Failed to open X/Twitter:", err)
-    );
+  /* ─── روابط التواصل ─── */
+  const openLink = (url: string) =>
+    Linking.openURL(url).catch((err) => console.warn("Cannot open url:", err));
+
+  /* ─── تغيير الثيم (auto/light/dark) ─── */
+  const onSelectTheme = (mode: "auto" | "light" | "dark") => {
+    setThemeMode(mode);
+    if (mode === "auto") {
+      const sys = Appearance.getColorScheme() || "light";
+      if (scheme !== sys) toggleTheme();
+    } else if (mode === "light" && scheme === "dark") {
+      toggleTheme();
+    } else if (mode === "dark" && scheme === "light") {
+      toggleTheme();
+    }
   };
 
+  /* ─── أيقونة الراديو بناءً على الاختيار ─── */
+  const RadioButton: React.FC<{ selected: boolean }> = ({ selected }) => (
+    <Ionicons
+      name={selected ? "radio-button-on" : "radio-button-off"}
+      size={20}
+      color={selected ? colors.primaryAccent : colors.secondaryText}
+    />
+  );
+
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
@@ -102,69 +114,99 @@ const SettingsScreen: React.FC = () => {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <View style={styles.container2}>
-              <View>
-                {/* صورة الملف الشخصي */}
+            {/* صورة الملف الشخصي */}
+            <TouchableOpacity style={styles.avatarWrapper} onPress={pickAvatar}>
+              {avatar ? (
+                <Image source={{ uri: avatar }} style={styles.avatar} />
+              ) : (
+                <Ionicons name="camera" size={28} color={COLORS.lightText} />
+              )}
+            </TouchableOpacity>
+            <Text style={[styles.sectionLabel, { color: colors.primaryText }]}>
+              Profile Picture
+            </Text>
+
+            {/* زر الحفظ */}
+            <Button
+              title="Save photo"
+              onPress={saveAvatar}
+              disabled={!avatar || isPending}
+            />
+
+            {/* تقسيم الثيم */}
+            <View style={[styles.sectionContainer]}>
+              <Text
+                style={[styles.sectionLabel, { color: colors.primaryText }]}
+              >
+                Theme Mode
+              </Text>
+              {(["auto", "light", "dark"] as const).map((mode) => (
                 <TouchableOpacity
-                  style={styles.avatarWrapper}
-                  onPress={pickAvatar}
+                  key={mode}
+                  style={styles.radioRow}
+                  onPress={() => onSelectTheme(mode)}
                 >
-                  {avatar ? (
-                    <Image source={{ uri: avatar }} style={styles.avatar} />
-                  ) : (
-                    <Ionicons
-                      name="camera"
-                      size={28}
-                      color={COLORS.lightText}
-                    />
-                  )}
+                  <RadioButton selected={themeMode === mode} />
+                  <Text
+                    style={[
+                      styles.radioLabel,
+                      {
+                        color:
+                          themeMode === mode
+                            ? colors.primaryText
+                            : colors.secondaryText,
+                      },
+                    ]}
+                  >
+                    {mode === "auto"
+                      ? "Automatic"
+                      : mode === "light"
+                      ? "Light"
+                      : "Dark"}
+                  </Text>
                 </TouchableOpacity>
-                <Text style={styles.sectionLabel}>صورة الملف الشخصي</Text>
-              </View>
-              <View>
-                {/* زر تسجيل الخروج */}
-                <LogOut />
-              </View>
+              ))}
             </View>
 
-            {/* مفتاح البصمة */}
-            <View style={styles.row}>
-              <Text style={styles.rowLabel}>تسجيل الدخول بالبصمة</Text>
-              <Switch value={bioEnabled} onValueChange={toggleBiometric} />
-            </View>
-
-            {/* قسم التواصل الاجتماعي */}
+            {/* روابط التواصل الاجتماعي */}
             <View style={styles.socialContainer}>
-              <Text style={styles.sectionLabel}>تواصل معنا عبر</Text>
+              <Text
+                style={[styles.sectionLabel, { color: colors.primaryText }]}
+              >
+                Connect with us
+              </Text>
 
               <View style={styles.socialRow}>
-                {/* واتساب */}
                 <TouchableOpacity
                   style={styles.socialButton}
-                  onPress={openWhatsApp}
+                  onPress={() => openLink("https://wa.me/96565115465")}
                 >
                   <Ionicons name="logo-whatsapp" size={32} color="#25D366" />
-                  <Text style={styles.socialText}>واتساب</Text>
                 </TouchableOpacity>
 
-                {/* إنستقرام */}
                 <TouchableOpacity
                   style={styles.socialButton}
-                  onPress={openInstagram}
+                  onPress={() =>
+                    openLink("https://instagram.com/your_username")
+                  }
                 >
                   <Ionicons name="logo-instagram" size={32} color="#C13584" />
-                  <Text style={styles.socialText}>إنستقرام</Text>
                 </TouchableOpacity>
 
-                {/* إكس (تويتر) */}
-                <TouchableOpacity style={styles.socialButton} onPress={openX}>
-                  <Ionicons
-                    name="logo-twitter"
-                    size={32}
-                    color={COLORS.socialIcon}
-                  />
-                  <Text style={styles.socialText}>إكس</Text>
+                <TouchableOpacity
+                  style={styles.socialButton}
+                  onPress={() => openLink("https://x.com/your_username")}
+                >
+                  <FontAwesome6 name="x-twitter" size={24} color="black" />
                 </TouchableOpacity>
+              </View>
+
+              {/* مفتاح تفعيل البصمة */}
+              <View style={styles.row}>
+                <Text style={[styles.rowLabel, { color: colors.primaryText }]}>
+                  Biometric Login
+                </Text>
+                <Switch value={bioEnabled} onValueChange={toggleBiometric} />
               </View>
             </View>
           </ScrollView>
@@ -176,32 +218,14 @@ const SettingsScreen: React.FC = () => {
 
 export default SettingsScreen;
 
-/* --------------------- الأنماط --------------------- */
+/* -------------------- Styles -------------------- */
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+  safe: { flex: 1 },
   container: {
     alignItems: "center",
     paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 60,
-  },
-  container2: {
-    flex: 1,
-    flexDirection: "row",
-    alignContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 24,
-    paddingTop: 10,
-    paddingBottom: 10,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: COLORS.primary,
-    marginBottom: 16,
   },
   avatarWrapper: {
     backgroundColor: COLORS.primary,
@@ -212,24 +236,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 16,
     marginBottom: 8,
-    // إضافة ظل بسيط للآفتر بقاعدة أندرويد و iOS
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
-    elevation: 4, // لأندرويد
+    elevation: 4,
   },
-  avatar: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
+  avatar: { width: 110, height: 110, borderRadius: 55 },
+  sectionLabel: { fontSize: 18, fontWeight: "600", marginBottom: 16 },
+  sectionContainer: { width: "100%", marginBottom: 32 },
+  radioRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
   },
-  sectionLabel: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: COLORS.primary,
-    marginBottom: 16,
-  },
+  radioLabel: { fontSize: 16, marginLeft: 8 },
   row: {
     width: "100%",
     flexDirection: "row",
@@ -238,10 +259,7 @@ const styles = StyleSheet.create({
     marginVertical: 12,
     paddingHorizontal: 8,
   },
-  rowLabel: {
-    fontSize: 16,
-    color: COLORS.primary,
-  },
+  rowLabel: { fontSize: 16 },
   socialContainer: {
     width: "100%",
     marginTop: 32,
@@ -255,23 +273,43 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   socialButton: {
-    alignItems: "center",
-    justifyContent: "center",
     width: 80,
     height: 80,
     backgroundColor: COLORS.lightText,
     borderRadius: 12,
-    // ظل بسيط لكل زر
+    alignItems: "center",
+    justifyContent: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 3,
   },
-  socialText: {
-    marginTop: 4,
-    fontSize: 14,
-    fontWeight: "500",
-    color: COLORS.primary,
+  clearButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderRadius: 6,
   },
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  searchInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 16,
+  },
+  clearAmountButton: {
+    marginLeft: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderRadius: 6,
+  },
+  error: { fontWeight: "bold", textAlign: "center" },
 });

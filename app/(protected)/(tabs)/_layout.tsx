@@ -1,43 +1,41 @@
-import LogOut from "@/components/LogOut";
+// /app/(protected)/_layout.tsx   ← ضع الملف أو استبدله بالمسار المناسب
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import React from "react";
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useTheme } from "@/assets/theme/ThemeProvider";
+import LogOut from "@/components/LogOut";
+
 export default function TabLayout() {
-  // نجلب قيمة الـ insets من أسفل الشاشة
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
 
   return (
     <Tabs
       screenOptions={{
         headerShown: true,
         headerStyle: {
-          backgroundColor: "#1E3D58",
+          backgroundColor: colors.primaryDark,
           shadowColor: "transparent",
           elevation: 0,
         },
-        headerTintColor: "#FFFFFF",
+        headerTintColor: colors.primaryText,
         headerTitleStyle: {
           fontWeight: "bold",
           fontSize: 18,
-          color: "#FFFFFF",
+          color: colors.primaryText,
         },
-        // هنا نُعطي شريط التبويبات ارتفاعاً يشمل الـ inset أسفل الشاشة
         tabBarStyle: {
-          backgroundColor: "#FFFFFF",
-          borderTopColor: "#C5CED8",
-          // نزيد الطول بمقدار inset.bottom ليُبتعد عن أزرار النظام
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
           height: 60 + insets.bottom,
-          // ونعطيه حشوة (padding) من الأسفل تساوي inset.bottom
           paddingBottom: insets.bottom,
         },
-        tabBarActiveTintColor: "#00A8E8",
-        tabBarInactiveTintColor: "#C5CED8",
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: "600",
-        },
+        tabBarActiveTintColor: colors.primaryAccent,
+        tabBarInactiveTintColor: colors.secondaryText,
+        tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
         headerRight: () => (
           <View style={styles.logoutContainer}>
             <LogOut />
@@ -48,7 +46,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="(home)"
         options={{
-          title: "الرئيسية",
+          title: "Home",
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons name="home" color={color} size={size} />
           ),
@@ -57,7 +55,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="(transactions)"
         options={{
-          title: "التحويلات",
+          title: "Transactions",
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons
               name="account-balance-wallet"
@@ -70,7 +68,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="(users)"
         options={{
-          title: "users",
+          title: "Users",
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons name="group" color={color} size={size} />
           ),
@@ -79,7 +77,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="(settings)"
         options={{
-          title: "الإعدادات",
+          title: "Settings",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="settings-outline" color={color} size={size} />
           ),
@@ -90,7 +88,5 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  logoutContainer: {
-    marginRight: 16,
-  },
+  logoutContainer: { marginRight: 16 },
 });

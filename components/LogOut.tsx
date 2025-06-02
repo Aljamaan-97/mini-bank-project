@@ -1,16 +1,29 @@
-import { deleteToken, isBiometricEnabled } from "@/Api/store";
-import AuthContext from "@/context/AuthContext";
+// /app/components/LogOut.tsx
 import { Entypo } from "@expo/vector-icons";
 import React, { useContext } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+import {
+  deleteBiometricFlag,
+  deleteToken,
+  isBiometricEnabled,
+} from "@/Api/store";
+import { useTheme } from "@/assets/theme/ThemeProvider";
+import AuthContext from "@/context/AuthContext";
+
 const LogOut: React.FC = () => {
   const { setIsAuthenticated } = useContext(AuthContext);
+  const { colors } = useTheme();
 
   const handleLogout = async () => {
     const bioFlag = await isBiometricEnabled();
 
-    /* إذا كانت البصمة مفعَّلة، نسأل المستخدم إن كان يريد حذف التوكِن */
+    const doLogout = async (clearBiometric = false) => {
+      await deleteToken();
+      if (clearBiometric) await deleteBiometricFlag();
+      setIsAuthenticated(false);
+    };
+
     if (bioFlag) {
       Alert.alert(
         "Logout",
@@ -18,34 +31,24 @@ const LogOut: React.FC = () => {
         [
           {
             text: "Keep",
-            onPress: () => setIsAuthenticated(false), // لا نحذف التوكِن
+            onPress: () => setIsAuthenticated(false), // يخرج مع بقاء البصمة مفعّلة
           },
           {
             text: "Remove",
             style: "destructive",
-            onPress: async () => {
-              await deleteToken(); // حذف التوكِن فعليًا
-              setIsAuthenticated(false);
-            },
+            onPress: () => doLogout(true), // حذف التوكِن + علم البصمة
           },
           { text: "Cancel", style: "cancel" },
         ],
         { cancelable: true }
       );
     } else {
-      /* البصمة غير مفعَّلة → نحذف التوكِن مباشرة */
       Alert.alert("Logout", "You are about to logout?", [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
+        { text: "Cancel", style: "cancel" },
         {
           text: "OK",
           style: "destructive",
-          onPress: async () => {
-            await deleteToken();
-            setIsAuthenticated(false);
-          },
+          onPress: () => doLogout(),
         },
       ]);
     }
@@ -53,9 +56,20 @@ const LogOut: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.btn} onPress={handleLogout}>
-        <Text style={styles.btnText}>Logout</Text>
-        <Entypo name="log-out" size={18} color="#fff" />
+      <TouchableOpacity
+        style={[
+          styles.btn,
+          {
+            borderColor: colors.primaryText,
+            backgroundColor: colors.primaryAccent,
+          },
+        ]}
+        onPress={handleLogout}
+      >
+        <Entypo name="log-out" size={18} color={colors.primaryText} />
+        <Text style={[styles.btnText, { color: colors.primaryText }]}>
+          Logout
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -63,21 +77,18 @@ const LogOut: React.FC = () => {
 
 export default LogOut;
 
-/* ----------------- styles ----------------- */
+/* ---------- styles ---------- */
 const styles = StyleSheet.create({
   container: { alignItems: "center" },
   btn: {
     flexDirection: "row",
-    alignItems: "center",
     gap: 6,
-    borderWidth: 1,
-    borderColor: "#fff",
+    alignItems: "center",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 20,
   },
   btnText: {
-    color: "#fff",
     fontSize: 16,
     fontWeight: "700",
   },

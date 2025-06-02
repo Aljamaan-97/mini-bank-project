@@ -1,4 +1,3 @@
-import { Image } from "react-native";
 import instance from ".";
 import UserType from "../types/usertype";
 import { storeToken } from "./store";
@@ -44,9 +43,24 @@ const getAllUsers = async () => {
   return data;
 };
 
-const updateProfile = async (image: Image) => {
-  const { data } = await instance.put("/auth/profile");
-  return data;
+const updateProfile = async (image: string) => {
+  try {
+    const formData = new FormData();
+
+    formData.append("image", {
+      name: "profile.jpeg",
+      uri: image,
+      type: "image/jpeg",
+    } as any);
+    const { data } = await instance.post("/auth/register", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    return data;
+  } catch (error) {
+    console.error("Error in register function:", error);
+    throw error; // Re-throw the error to handle it in the calling function
+  }
 };
 
 const getTransactions = async () => {
@@ -73,9 +87,8 @@ const withdrawFunds = async (amount: number) => {
 };
 
 const transferToUser = async (amount: number, username: string) => {
-  const { data } = await instance.put("/transactions/transfer", {
+  const { data } = await instance.put(`/transactions/transfer/${username}`, {
     amount,
-    username,
   }); //check if syntax is correct
   return data;
 };

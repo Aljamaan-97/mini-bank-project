@@ -1,50 +1,72 @@
-import { getAllUsers } from "@/Api/auth";
-import { useQuery } from "@tanstack/react-query";
+import { getAllUsers, transferToUser } from "@/Api/auth";
+import UserCard from "@/components/UserCard";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import React from "react";
-import { Button, Image, Text, View } from "react-native";
+import { Alert, FlatList, StyleSheet, Text, View } from "react-native";
 
-const index = () => {
-  const { data } = useQuery({
+export default function UsersScreen() {
+  const {
+    data: users = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ["users"],
     queryFn: getAllUsers,
   });
+
+  const { mutate: transfer } = useMutation({
+    mutationFn: ({ amount, userId }: { amount: number; userId: string }) =>
+      transferToUser(amount, userId),
+    onSuccess: () => {
+      Alert.alert("✅ Success", "Funds transferred successfully!");
+    },
+    onError: (error: any) => {
+      console.log(" Transfer error:", error?.response?.data);
+      Alert.alert(
+        " Error",
+        error?.response?.data?.message || "Transfer failed"
+      );
+    },
+  });
+
+  const handleTransfer = (userId: string, amount: number) => {
+    if (!amount || amount <= 0) {
+      Alert.alert("Invalid amount", "Please enter a valid amount.");
+      return;
+    }
+    transfer({ amount, userId });
+  };
+
   return (
-    <View
-      style={{
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 10,
-        marginBottom: 20,
-        borderWidth: 1,
-      }}
-    >
-      <Image
-        source={{
-          uri: "https://media.istockphoto.com/id/1337144146/vector/default-avatar-profile-icon-vector.jpg?s=612x612&w=0&k=20&c=BIbFwuv7FxTWvh5S3vB6bkT0Qv8Vn8N5Ffseq84ClGI=",
-        }}
-        style={{
-          width: 200,
-          height: 200,
-          borderRadius: 10,
-        }}
-      />
+    <View style={styles.container}>
+      <Text style={styles.title}>Users</Text>
 
-      <Text
-        style={{
-          fontSize: 18,
-          textAlign: "center",
-          color: "purple",
-          fontWeight: "bold",
-        }}
-      >
-        {" "}
-        username
-      </Text>
-
-      <Button title="transfer" onPress={() => {}} />
+      {isLoading ? (
+        <Text>Loading users...</Text>
+      ) : isError ? (
+        <Text>Error loading users.</Text>
+      ) : (
+        <FlatList
+          data={users}
+          keyExtractor={(item, index) => item._id || index.toString()}
+          renderItem={({ item }) => (
+            <UserCard user={item} onTransfer={handleTransfer} />
+          )}
+        />
+      )}
     </View>
   );
-};
+}
 
-export default index;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 12,
+  },
+});

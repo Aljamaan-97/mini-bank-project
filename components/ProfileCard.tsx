@@ -1,20 +1,23 @@
 import { getMyProfile } from "@/Api/auth";
+import { useTheme } from "@/assets/theme/ThemeProvider";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
+const COLORS = useTheme();
+// /app/components/ProfileCard.tsx
 
 /* لوحة الألوان الموحَّدة */
-const COLORS = {
-  primary: "#1E3D58",
-  accent: "#00A8E8",
-  lightText: "#FFFFFF",
-  border: "#C5CED8",
-  card: "#FFFFFF",
-};
+// const COLORS = {
+//   primary: "#1E3D58",
+//   accent: "#00A8E8",
+//   lightText: "#FFFFFF",
+//   border: "#C5CED8",
+//   card: "#FFFFFF",
+// };
 
 /**
- * بطاقة الملف الشخصي: صورة، اسم مستخدم، رصيد متاح، زر تسجيل الخروج
+ *بطاقة الملف الشخصي: صورة، اسم مستخدم، رصيد متاح
  */
 const ProfileCard = () => {
   const { data, error, isLoading } = useQuery({
@@ -25,14 +28,16 @@ const ProfileCard = () => {
   if (isLoading)
     return (
       <View style={styles.centerBox}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivityIndicator size="large" color={COLORS.colors.surface} />
       </View>
     );
 
   if (error)
     return (
       <View style={styles.centerBox}>
-        <Text style={{ color: COLORS.primary }}>Error loading profile</Text>
+        <Text style={{ color: COLORS.colors.surface }}>
+          Error loading profile
+        </Text>
       </View>
     );
 
@@ -74,14 +79,20 @@ const ProfileCard = () => {
           source={imageUrl ? { uri: imageUrl } : avatarUri}
           style={styles.avatar}
         />
-      </View>
+        <Text
+          style={[styles.welcomeText, { color: COLORS.colors.primaryText }]}
+        >
+          Welcome, {username}
+        </Text>
 
-      {/* بيانات المستخدم */}
-      <Text style={styles.welcomeText}>Welcome, {username}</Text>
-
-      <View style={styles.balanceRow}>
-        <Ionicons name="wallet" size={20} color={COLORS.primary} />
-        <Text style={styles.balanceText}>${balance.toFixed(0)}</Text>
+        <View style={styles.balanceRow}>
+          <Ionicons name="wallet" size={20} color={COLORS.colors.primaryText} />
+          <Text
+            style={[styles.balanceText, { color: COLORS.colors.primaryText }]}
+          >
+            {balance.toFixed(3)} KD
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -89,7 +100,7 @@ const ProfileCard = () => {
 
 export default ProfileCard;
 
-/* ------------------------------- الأنماط ------------------------------- */
+/* ---------- styles ---------- */
 const styles = StyleSheet.create({
   centerBox: {
     flex: 1,
@@ -98,42 +109,23 @@ const styles = StyleSheet.create({
   },
   card: {
     width: "90%",
-    backgroundColor: COLORS.card,
     borderRadius: 12,
     padding: 24,
+    alignSelf: "center",
+    marginTop: 20,
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
-    alignSelf: "center",
-    marginTop: 20,
   },
   headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: "column",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  avatar: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-  },
-  welcomeText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: COLORS.primary,
-    marginBottom: 8,
-  },
-  balanceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  balanceText: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: COLORS.primary,
-  },
+  avatar: { width: 90, height: 90, borderRadius: 45, marginBottom: 12 },
+  welcomeText: { fontSize: 18, fontWeight: "600", marginBottom: 8 },
+  balanceRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  balanceText: { fontSize: 20, fontWeight: "700" },
 });

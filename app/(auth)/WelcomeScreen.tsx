@@ -1,61 +1,76 @@
-import { isBiometricEnabled } from "@/Api/store";
-import * as LocalAuth from "expo-local-authentication";
+// /app/(auth)/WelcomeScreen.tsx
 import { useRouter } from "expo-router";
-import { StatusBar } from "expo-status-bar"; // ✅ أضفنا شريط الحالة
-import React, { useEffect } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StatusBar } from "expo-status-bar";
+import React, { useContext } from "react";
+import {
+  Image,
+  Platform,
+  StatusBar as RNStatusBar,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+
+import AuthContext from "@/context/AuthContext";
 
 const WelcomeScreen = () => {
+  const { isAuthenticated } = useContext(AuthContext);
   const router = useRouter();
-  useEffect(() => {
-    (async () => {
-      const ready =
-        (await LocalAuth.hasHardwareAsync()) &&
-        (await LocalAuth.isEnrolledAsync()) &&
-        (await isBiometricEnabled());
-    })();
-  }, []);
+
+  /* UI  */
   return (
-    <View style={styles.container}>
-      {/* ✅ شريط الحالة بألوان متناسقة */}
-      <StatusBar style="light" backgroundColor="#000042" />
+    <>
+      <StatusBar style="light" backgroundColor="transparent" translucent />
 
-      {/* الشعار */}
-      <Image
-        source={require("@/assets/images/sahala-log.png")}
-        style={styles.logo}
-      />
+      {Platform.OS === "android" && (
+        <View style={styles.statusBarPlaceholder} />
+      )}
 
-      {/* النصوص */}
-      <Text style={styles.title}>أهلاً بك في بنك سهالة</Text>
-      <Text style={styles.subtitle}>البنك إلي يسهل لك كل شيء</Text>
+      <SafeAreaView style={styles.container}>
+        <Image
+          source={require("@/assets/images/icon-removebg-preview.png")}
+          style={styles.logo}
+        />
 
-      {/* الأزرار */}
-      <View style={styles.buttonsContainer}>
-        <TouchableOpacity
-          style={styles.primaryButton}
-          onPress={() => router.push("/Login")}
-        >
-          <Text style={styles.buttonText}>تسجيل الدخول</Text>
-        </TouchableOpacity>
+        <Text style={styles.title}>Welcome to Sahala Bank</Text>
+        <Text style={styles.subtitle}>The bank that makes banking simple</Text>
 
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => router.push("/Register")}
-        >
-          <Text style={styles.secondaryButtonText}>تسجيل جديد</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+        <View style={styles.buttonsContainer}>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => router.push("/Login")}
+          >
+            <Text style={styles.buttonText}>Login</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => router.push("/Register")}
+          >
+            <Text style={styles.secondaryButtonText}>Register</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </>
   );
 };
 
 export default WelcomeScreen;
 
+/* ---------- styling ---------- */
+const STATUS_BAR_HEIGHT =
+  Platform.OS === "android" ? RNStatusBar.currentHeight : 0;
+
 const styles = StyleSheet.create({
+  statusBarPlaceholder: {
+    height: STATUS_BAR_HEIGHT,
+    backgroundColor: "#000042",
+  },
   container: {
     flex: 1,
-    backgroundColor: "#000042", // خلفية كحلي
+    backgroundColor: "#000042",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 24,
@@ -102,7 +117,7 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     textAlign: "center",
-    color: "#ffffff", // ✅ تم التعديل ليكون أبيض
+    color: "#ffffff",
     fontSize: 16,
     fontWeight: "600",
   },

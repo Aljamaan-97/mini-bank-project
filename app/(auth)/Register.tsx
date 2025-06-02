@@ -1,6 +1,4 @@
-import { register } from "@/Api/auth";
-import { setBiometricEnabled, storeToken } from "@/Api/store";
-import AuthContext from "@/context/AuthContext";
+// /app/(auth)/RegisterScreen.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
@@ -16,27 +14,28 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
 
-const COLORS = {
-  primary: "#1E3D58",
-  accent: "#00A8E8",
-  lightText: "#FFFFFF",
-  border: "#C5CED8",
-  background: "#F4F6F9",
-};
+import { register } from "@/Api/auth";
+import { setBiometricEnabled, storeToken } from "@/Api/store";
+import { useTheme } from "@/assets/theme/ThemeProvider";
+import Button from "@/components/Button";
+import Input from "@/components/Input";
+import AuthContext from "@/context/AuthContext";
 
-const Register: React.FC = () => {
-  const [name, setName] = useState("");
-  const [password, setPassword] = useState("");
-  const [image, setImage] = useState<string | null>(null);
+export default function RegisterScreen() {
   const { setIsAuthenticated } = useContext(AuthContext);
+  const { colors } = useTheme();
   const router = useRouter();
 
+  const [userName, setUserName] = useState("");
+  const [password, setPassword] = useState("");
+  const [image, setImage] = useState<string | null>(null);
+
+  // Pick a profile image
   const pickImage = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -47,15 +46,23 @@ const Register: React.FC = () => {
     if (!res.canceled) setImage(res.assets[0].uri);
   };
 
+  // Move to protected stack
+  const finalize = () => {
+    setIsAuthenticated(true);
+    router.replace("/(protected)/(tabs)/(home)");
+  };
+
+  // React-Query register call
   const { mutate, isPending } = useMutation({
     mutationKey: ["register"],
-    mutationFn: () => register(name, password, image || ""),
-    onError: () => Alert.alert("خطأ", "تعذّر إنشاء الحساب"),
+    mutationFn: () => register(userName, password, image || ""),
+    onError: () => Alert.alert("Registration failed", "Please try again later"),
     onSuccess: async (data) => {
-      if (data.token) await storeToken(data.token);
+      if (data?.token) await storeToken(data.token);
+
       Alert.alert(
-        "تفعيل البصمة",
-        "هل ترغب باستخدام البصمة لتسجيل الدخول؟",
+        "Enable biometric login?",
+        "You can use fingerprint / face-ID next time.",
         [
           { text: "Later", style: "cancel", onPress: finalize },
           {
@@ -71,18 +78,16 @@ const Register: React.FC = () => {
     },
   });
 
-  const finalize = () => {
-    setIsAuthenticated(true);
-    router.replace("/(protected)/(tabs)/(home)");
-  };
-
+  // Handle “Register” button
   const handleRegister = () => {
-    if (!name || !password) return Alert.alert("تنبيه", "أدخل البيانات");
+    if (!userName.trim() || !password.trim()) {
+      return Alert.alert("Missing data", "Please enter username & password");
+    }
     mutate();
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
@@ -94,61 +99,75 @@ const Register: React.FC = () => {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
+            {/* logo */}
             <Ionicons
               name="cash-outline"
               size={64}
-              color={COLORS.accent}
+              color={colors.primaryAccent}
               style={styles.logo}
             />
-            <Text style={styles.title}>Friends Bank</Text>
-            <Text style={styles.subtitle}>إنشاء حساب جديد</Text>
 
-            {/* صورة الملف الشخصي */}
+            {/* heading */}
+            <Text style={[styles.title, { color: colors.primaryAccent }]}>
+              Create an account
+            </Text>
+            <Text style={[styles.subtitle, { color: colors.primaryText }]}>
+              It only takes a minute
+            </Text>
+
+            {/* profile image */}
             <TouchableOpacity onPress={pickImage} activeOpacity={0.8}>
-              <View style={styles.avatarWrapper}>
+              <View
+                style={[
+                  styles.avatarWrapper,
+                  { backgroundColor: colors.border },
+                ]}
+              >
                 {image ? (
                   <Image source={{ uri: image }} style={styles.avatar} />
                 ) : (
-                  <Ionicons name="camera" size={28} color={COLORS.lightText} />
+                  <Ionicons
+                    name="camera"
+                    size={28}
+                    color={colors.secondaryText}
+                  />
                 )}
               </View>
             </TouchableOpacity>
 
-            <TextInput
+            {/* form */}
+            <Input
+              label="Username"
               placeholder="Username"
-              placeholderTextColor={COLORS.border}
-              style={styles.input}
+              placeholderTextColor={colors.border}
+              value={userName}
+              onChangeText={setUserName}
               autoCapitalize="none"
-              value={name}
-              onChangeText={setName}
             />
-            <TextInput
+            <Input
+              label="Password"
               placeholder="Password"
-              placeholderTextColor={COLORS.border}
-              style={styles.input}
+              placeholderTextColor={colors.border}
               secureTextEntry
               value={password}
               onChangeText={setPassword}
             />
 
-            <TouchableOpacity
-              style={[styles.primaryBtn, isPending && styles.btnDisabled]}
+            <Button
+              title="Register"
               onPress={handleRegister}
-              activeOpacity={0.85}
               disabled={isPending}
-            >
-              <Ionicons
-                name="person-add-outline"
-                size={20}
-                color={COLORS.lightText}
-              />
-              <Text style={styles.btnText}>Register</Text>
-            </TouchableOpacity>
+            />
 
-            <View style={styles.switchWrapper}>
-              <Text>Have an account? </Text>
-              <TouchableOpacity onPress={() => router.replace("./Login")}>
-                <Text style={styles.link}>Login</Text>
+            {/* go to login */}
+            <View style={[styles.switchWrapper, { flexDirection: "row" }]}>
+              <Text style={{ color: colors.primaryText }}>
+                Already have an account?{" "}
+              </Text>
+              <TouchableOpacity onPress={() => router.replace("/(auth)/Login")}>
+                <Text style={[styles.link, { color: colors.primaryAccent }]}>
+                  Login
+                </Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -156,12 +175,10 @@ const Register: React.FC = () => {
       </TouchableWithoutFeedback>
     </SafeAreaView>
   );
-};
-
-export default Register;
+}
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.background },
+  safe: { flex: 1 },
   container: {
     alignItems: "center",
     paddingHorizontal: 24,
@@ -169,10 +186,9 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   logo: { marginBottom: 12 },
-  title: { fontSize: 26, fontWeight: "700", color: COLORS.primary },
-  subtitle: { fontSize: 14, color: COLORS.primary, marginBottom: 24 },
+  title: { fontSize: 26, fontWeight: "700", marginBottom: 4 },
+  subtitle: { fontSize: 14, marginBottom: 24 },
   avatarWrapper: {
-    backgroundColor: COLORS.border,
     width: 100,
     height: 100,
     borderRadius: 50,
@@ -181,27 +197,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   avatar: { width: 100, height: 100, borderRadius: 50 },
-  input: {
-    width: "100%",
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 16,
-    backgroundColor: COLORS.lightText,
-  },
-  primaryBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: COLORS.primary,
-    paddingVertical: 14,
-    paddingHorizontal: 34,
-    borderRadius: 30,
-    marginTop: 8,
-  },
-  btnText: { color: COLORS.lightText, fontWeight: "600", fontSize: 16 },
-  btnDisabled: { opacity: 0.6 },
-  link: { color: COLORS.accent, textDecorationLine: "underline" },
-  switchWrapper: { flexDirection: "row", marginTop: 18 },
+  link: { textDecorationLine: "underline", fontWeight: "600" },
+  switchWrapper: { marginTop: 18 },
 });

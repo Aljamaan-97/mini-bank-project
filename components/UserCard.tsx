@@ -1,14 +1,115 @@
-import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import React, { useState } from "react";
+import {
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-const UserCard = () => {
+interface User {
+  _id: string;
+  username: string;
+  balance: number;
+  image?: string;
+}
+
+interface UserCardProps {
+  user: User;
+  onTransfer: (username: string, amount: number) => void;
+}
+
+export default function UserCard({ user, onTransfer }: UserCardProps) {
+  const [amount, setAmount] = useState("");
+  const [showInput, setShowInput] = useState(false);
+
+  const isValidImage = user.image && !user.image.startsWith("C:\\fakepath");
+  const imageUrl = isValidImage
+    ? `https://react-bank-project.eapi.joincoded.com/${user.image}`
+    : "https://via.placeholder.com/60";
+
+  const handlePress = () => {
+    if (!showInput) {
+      setShowInput(true);
+      return;
+    }
+
+    const parsedAmount = parseFloat(amount);
+    if (!isNaN(parsedAmount)) {
+      onTransfer(user.username, parsedAmount);
+      setAmount("");
+      setShowInput(false);
+    }
+  };
+
   return (
-    <View style={{ padding: 10, backgroundColor: "#f0f0f0", borderRadius: 5 }}>
-      <Text>UserCard</Text>
+    <View style={styles.card}>
+      <Image source={{ uri: imageUrl }} style={styles.avatar} />
+      <View style={styles.info}>
+        <Text style={styles.name}>{user.username}</Text>
+        <Text style={styles.balance}>Balance: {user.balance}</Text>
+
+        {showInput && (
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            placeholder="Enter amount"
+            value={amount}
+            onChangeText={setAmount}
+          />
+        )}
+
+        <TouchableOpacity style={styles.button} onPress={handlePress}>
+          <Text style={styles.buttonText}>Transfer</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
-};
+}
 
-export default UserCard;
-
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  card: {
+    flexDirection: "row",
+    backgroundColor: "#f5f5f5",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    alignItems: "center",
+  },
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 12,
+  },
+  info: {
+    flex: 1,
+  },
+  name: {
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  balance: {
+    marginTop: 4,
+    marginBottom: 8,
+    color: "gray",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 6,
+    borderRadius: 4,
+    marginBottom: 8,
+  },
+  button: {
+    backgroundColor: "#007bff",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 4,
+    alignSelf: "flex-start",
+  },
+  buttonText: {
+    color: "white",
+  },
+});

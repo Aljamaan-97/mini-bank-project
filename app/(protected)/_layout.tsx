@@ -1,19 +1,24 @@
-import AuthContext from "@/context/AuthContext";
+// /app/(protected)/_layout.tsx
 import { Redirect, Stack } from "expo-router";
 import React, { useContext } from "react";
 
-const protectedLayout = () => {
+import AuthContext from "@/context/AuthContext";
+
+/** Parent layout for all protected stacks. */
+const ProtectedLayout = () => {
   const { isAuthenticated } = useContext(AuthContext);
-  // Check if the user is authenticated
-  console.log("layougt isAuthenticated", isAuthenticated);
+
+  /* If the user is not authenticated, bounce back to the auth flow */
   if (!isAuthenticated) {
-    return <Redirect href="/WelcomeScreen" />;
-  } else {
-    return (
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-      </Stack>
-    );
+    return <Redirect href="/(auth)/WelcomeScreen" />;
   }
+
+  /* Otherwise render the tab-stack normally */
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" />
+    </Stack>
+  );
 };
-export default protectedLayout;
+
+export default ProtectedLayout;
