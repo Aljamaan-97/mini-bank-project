@@ -27,14 +27,10 @@ import { useTheme } from "@/assets/theme/ThemeProvider"; // للألوان ال�
 import Button from "@/components/Button"; // زرّك الموحّد
 import LogOut from "@/components/LogOut";
 
-/* ثابت ألوان احتياطي (يُستخدم لو لم تستورد من ThemeProvider) */
-const COLORS = {
-  primary: "#1E3D58",
-  accent: "#00A8E8",
-  lightText: "#FFFFFF",
-  border: "#C5CED8",
-  background: "#F4F6F9",
-};
+/**
+ * حذفنا الثابت COLORS هنا لأننا سوف نعتمد بالكامل
+ * على ألوان الثيم من useTheme().
+ */
 
 const SettingsScreen: React.FC = () => {
   const { colors, scheme, toggleTheme } = useTheme(); // استعمل ألوان الثيم
@@ -116,11 +112,17 @@ const SettingsScreen: React.FC = () => {
             keyboardShouldPersistTaps="handled"
           >
             {/* صورة الملف الشخصي */}
-            <TouchableOpacity style={styles.avatarWrapper} onPress={pickAvatar}>
+            <TouchableOpacity
+              style={[
+                styles.avatarWrapper,
+                { backgroundColor: colors.primaryAccent },
+              ]}
+              onPress={pickAvatar}
+            >
               {avatar ? (
                 <Image source={{ uri: avatar }} style={styles.avatar} />
               ) : (
-                <Ionicons name="camera" size={28} color={COLORS.lightText} />
+                <Ionicons name="camera" size={28} color={colors.primaryText} />
               )}
             </TouchableOpacity>
             <Text style={[styles.sectionLabel, { color: colors.primaryText }]}>
@@ -132,6 +134,7 @@ const SettingsScreen: React.FC = () => {
               title="Save photo"
               onPress={saveAvatar}
               disabled={!avatar || isPending}
+              // نفترض أنّ Button يأخذ تلقائيًا ألوان من الثيم الداخلي
             />
 
             {/* تقسيم الثيم */}
@@ -179,26 +182,42 @@ const SettingsScreen: React.FC = () => {
 
               <View style={styles.socialRow}>
                 <TouchableOpacity
-                  style={styles.socialButton}
+                  style={[
+                    styles.socialButton,
+                    { backgroundColor: colors.surface },
+                  ]}
                   onPress={() => openLink("https://wa.me/96565115465")}
                 >
+                  {/* أيقونة الواتساب: رمزها أخضر، نتركها على اللون الأصلي */}
                   <Ionicons name="logo-whatsapp" size={32} color="#25D366" />
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.socialButton}
+                  style={[
+                    styles.socialButton,
+                    { backgroundColor: colors.surface },
+                  ]}
                   onPress={() =>
                     openLink("https://instagram.com/your_username")
                   }
                 >
+                  {/* أيقونة إنستغرام: نستخدم اللون الرسمي أو نصغي للثيم */}
                   <Ionicons name="logo-instagram" size={32} color="#C13584" />
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.socialButton}
+                  style={[
+                    styles.socialButton,
+                    { backgroundColor: colors.surface },
+                  ]}
                   onPress={() => openLink("https://x.com/your_username")}
                 >
-                  <FontAwesome6 name="x-twitter" size={24} color="black" />
+                  {/* أيقونة X (Twitter سابقًا) */}
+                  <FontAwesome6
+                    name="x-twitter"
+                    size={24}
+                    color={colors.primaryAccent}
+                  />
                 </TouchableOpacity>
               </View>
 
@@ -230,7 +249,6 @@ const styles = StyleSheet.create({
     paddingBottom: 60,
   },
   avatarWrapper: {
-    backgroundColor: COLORS.primary,
     width: 110,
     height: 110,
     borderRadius: 55,
@@ -277,7 +295,6 @@ const styles = StyleSheet.create({
   socialButton: {
     width: 80,
     height: 80,
-    backgroundColor: COLORS.lightText,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
@@ -287,31 +304,7 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 3,
   },
-  clearButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderRadius: 6,
-  },
-  searchRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  searchInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  rowLabelText: {
     fontSize: 16,
   },
-  clearAmountButton: {
-    marginLeft: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderRadius: 6,
-  },
-  error: { fontWeight: "bold", textAlign: "center" },
 });
