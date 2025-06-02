@@ -47,16 +47,9 @@ const WelcomeScreen = () => {
         <View style={styles.buttonsContainer}>
           <TouchableOpacity
             style={styles.primaryButton}
-            onPress={() => router.push("/Login")}
+            onPress={() => router.replace("/Login")}
           >
-            <Text style={styles.buttonText}>Login</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => router.push("/Register")}
-          >
-            <Text style={styles.secondaryButtonText}>Register</Text>
+            <Text style={styles.buttonText}>Lets start</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

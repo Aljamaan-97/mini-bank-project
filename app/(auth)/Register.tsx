@@ -108,7 +108,7 @@ export default function RegisterScreen() {
             />
 
             {/* heading */}
-            <Text style={[styles.title, { color: colors.primaryAccent }]}>
+            <Text style={[styles.title, { color: colors.primaryText }]}>
               Create an account
             </Text>
             <Text style={[styles.subtitle, { color: colors.primaryText }]}>

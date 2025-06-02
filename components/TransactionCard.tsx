@@ -69,12 +69,12 @@ const TransactionCard: React.FC<Props> = ({ transaction }) => {
 
       {transaction.type === "transfer" && (
         <>
-          <Text style={{ color: colors.primaryText }}>
+          {/* <Text style={{ color: colors.primaryText }}>
             From: {transaction.from}
           </Text>
           <Text style={{ color: colors.primaryText }}>
             To: {transaction.to}
-          </Text>
+          </Text> */}
         </>
       )}
 

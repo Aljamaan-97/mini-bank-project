@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import {
   ActivityIndicator,
-  Image,
   ImageBackground,
   StyleSheet,
   Text,
@@ -59,23 +58,40 @@ const ProfileCard = () => {
     >
       <View style={styles.overlay}>
         <View style={styles.headerRow}>
-          <Image source={avatarUri} style={styles.avatar} />
-          <Text
+          {/* إذا أردت عرض الصورة، فك التعليق هنا مع ضبط الـ styles.avatar */}
+          {/* <Image source={avatarUri} style={styles.avatar} /> */}
+          {/* <Text
             style={[styles.welcomeText, { color: COLORS.colors.primaryText }]}
           >
-            {data.username || "Unknown"}
-          </Text>
+            welcome: {data.username || "Unknown"}
+          </Text> */}
+
+          {/* هنا الموديفيكاشن */}
           <View style={styles.balanceRow}>
-            <Ionicons
-              name="wallet"
-              size={20}
-              color={COLORS.colors.primaryText}
-            />
             <Text
-              style={[styles.balanceText, { color: COLORS.colors.primaryText }]}
+              style={[
+                styles.balanceLabel,
+                { color: COLORS.colors.primaryText },
+              ]}
             >
-              {data.balance.toFixed(3)} KD
+              current balance
             </Text>
+
+            <View style={styles.amountRow}>
+              <Text
+                style={[
+                  styles.balanceText,
+                  { color: COLORS.colors.primaryText },
+                ]}
+              >
+                {data.balance.toFixed(3)} KD
+              </Text>
+              <Ionicons
+                name="wallet"
+                size={20}
+                color={COLORS.colors.primaryText}
+              />
+            </View>
           </View>
         </View>
       </View>
@@ -125,8 +141,19 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   balanceRow: {
-    flexDirection: "row",
+    flexDirection: "column", // نص فوق بعض
     alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
+  },
+  balanceLabel: {
+    fontSize: 20,
+    fontWeight: "700",
+    marginBottom: 8, // مسافة بسيطة بين النص والصف التالي
+  },
+  amountRow: {
+    flexDirection: "row", // الأيقونة والمبلغ جنب بعض
+    alignItems: "flex-start",
     gap: 6,
   },
   balanceText: {
