@@ -1,7 +1,7 @@
 // /app/(auth)/WelcomeScreen.tsx
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import {
   Image,
   Platform,
@@ -19,7 +19,14 @@ const WelcomeScreen = () => {
   const { isAuthenticated } = useContext(AuthContext);
   const router = useRouter();
 
-  /* UI  */
+  // ─── ننقل هنا منطق التحقق والتنقل داخل useEffect ───
+  useEffect(() => {
+    if (isAuthenticated) {
+      // إذا كان المستخدم موثّقًا، نعيد توجيهه إلى تبويب Home
+      router.replace("/(protected)/(tabs)/(home)");
+    }
+  }, [isAuthenticated, router]);
+
   return (
     <>
       <StatusBar style="light" backgroundColor="transparent" translucent />
@@ -61,7 +68,7 @@ export default WelcomeScreen;
 
 /* ---------- styling ---------- */
 const STATUS_BAR_HEIGHT =
-  Platform.OS === "android" ? RNStatusBar.currentHeight : 0;
+  Platform.OS === "android" ? RNStatusBar.currentHeight || 0 : 0;
 
 const styles = StyleSheet.create({
   statusBarPlaceholder: {
